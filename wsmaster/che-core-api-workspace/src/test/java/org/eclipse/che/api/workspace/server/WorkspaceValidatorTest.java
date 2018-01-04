@@ -12,7 +12,7 @@ package org.eclipse.che.api.workspace.server;
 
 import static java.util.Collections.singletonList;
 import static java.util.Collections.singletonMap;
-import static org.eclipse.che.api.core.model.workspace.config.MachineConfig.MEMORY_LIMIT_ATTRIBUTE;
+import static org.eclipse.che.api.core.model.workspace.runtime.Machine.MEMORY_LIMIT_ATTRIBUTE;
 import static org.eclipse.che.dto.server.DtoFactory.newDto;
 
 import com.google.common.collect.ImmutableMap;
@@ -22,6 +22,7 @@ import java.util.List;
 import java.util.Map;
 import org.eclipse.che.api.core.ValidationException;
 import org.eclipse.che.api.core.model.workspace.config.MachineConfig;
+import org.eclipse.che.api.core.model.workspace.runtime.Machine;
 import org.eclipse.che.api.workspace.shared.dto.CommandDto;
 import org.eclipse.che.api.workspace.shared.dto.EnvironmentDto;
 import org.eclipse.che.api.workspace.shared.dto.MachineConfigDto;
@@ -200,7 +201,7 @@ public class WorkspaceValidatorTest {
     final WorkspaceConfigDto config = createConfig();
     EnvironmentDto env = config.getEnvironments().values().iterator().next();
     MachineConfigDto machine = env.getMachines().values().iterator().next();
-    machine.getAttributes().put(MachineConfig.MEMORY_LIMIT_ATTRIBUTE, attributeValue);
+    machine.getAttributes().put(Machine.MEMORY_LIMIT_ATTRIBUTE, attributeValue);
 
     wsValidator.validateConfig(config);
   }

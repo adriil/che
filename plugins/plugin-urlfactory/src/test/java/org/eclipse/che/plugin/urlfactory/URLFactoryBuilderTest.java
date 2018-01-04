@@ -13,7 +13,7 @@ package org.eclipse.che.plugin.urlfactory;
 import static java.lang.Boolean.FALSE;
 import static java.util.Collections.singletonList;
 import static java.util.Collections.singletonMap;
-import static org.eclipse.che.api.core.model.workspace.config.MachineConfig.MEMORY_LIMIT_ATTRIBUTE;
+import static org.eclipse.che.api.core.model.workspace.runtime.Machine.MEMORY_LIMIT_ATTRIBUTE;
 import static org.eclipse.che.dto.server.DtoFactory.newDto;
 import static org.eclipse.che.plugin.urlfactory.URLFactoryBuilder.DEFAULT_DOCKER_IMAGE;
 import static org.eclipse.che.plugin.urlfactory.URLFactoryBuilder.DEFAULT_MEMORY_LIMIT_BYTES;

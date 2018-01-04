@@ -13,7 +13,7 @@ package org.eclipse.che.workspace.infrastructure.docker.environment.compose;
 import static com.google.common.collect.Maps.newLinkedHashMap;
 import static java.util.Collections.singletonList;
 import static java.util.Collections.singletonMap;
-import static org.eclipse.che.api.core.model.workspace.config.MachineConfig.MEMORY_LIMIT_ATTRIBUTE;
+
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -21,6 +21,7 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import java.util.Map;
 import org.eclipse.che.api.core.ValidationException;
+import org.eclipse.che.api.core.model.workspace.runtime.Machine;
 import org.eclipse.che.api.installer.server.model.impl.InstallerImpl;
 import org.eclipse.che.api.workspace.server.WsAgentMachineFinderUtil;
 import org.eclipse.che.api.workspace.server.model.impl.ServerConfigImpl;
@@ -83,7 +84,7 @@ public class ComposeEnvironmentValidatorTest {
     when(machineConfig.getServers())
         .thenReturn(singletonMap(Constants.SERVER_WS_AGENT_HTTP_REFERENCE, server));
     Map<String, String> attributes =
-        ImmutableMap.of("testKey", "value", MEMORY_LIMIT_ATTRIBUTE, "1000000000");
+        ImmutableMap.of("testKey", "value", Machine.MEMORY_LIMIT_ATTRIBUTE, "1000000000");
     when(machineConfig.getAttributes()).thenReturn(attributes);
     when(service.getExpose()).thenReturn(ImmutableSet.of("8090", "9090/tcp", "7070/udp"));
     when(service.getLinks()).thenReturn(singletonList(machine2Name + ":alias1"));
