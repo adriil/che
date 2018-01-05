@@ -323,7 +323,7 @@ public class SeleniumWebDriver
 
     for (int i = 0; i < 4; i++) {
       captureScreenshotsFromOpenedWindows(this);
-      WaitUtils.sleepQuietly(500, TimeUnit.MILLISECONDS);
+      WaitUtils.sleepQuietly(300, TimeUnit.MILLISECONDS);
     }
 
     for (String handle : getWindowHandles()) {
