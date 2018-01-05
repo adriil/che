@@ -63,7 +63,7 @@ public class WorkspaceManager {
   private static final Logger LOG = LoggerFactory.getLogger(WorkspaceManager.class);
 
   private final WorkspaceDao workspaceDao;
-  private final WorkspaceRuntimes runtimes;
+  protected final WorkspaceRuntimes runtimes;
   private final AccountManager accountManager;
   private final EventService eventService;
   private final WorkspaceValidator validator;

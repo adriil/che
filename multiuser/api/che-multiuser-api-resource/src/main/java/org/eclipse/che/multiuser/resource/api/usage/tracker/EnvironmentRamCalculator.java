@@ -10,31 +10,34 @@
  */
 package org.eclipse.che.multiuser.resource.api.usage.tracker;
 
+import static java.lang.String.format;
+import static org.eclipse.che.api.core.model.workspace.runtime.Machine.MEMORY_LIMIT_ATTRIBUTE;
+
+import java.util.Map;
 import javax.inject.Inject;
-import javax.inject.Named;
+import org.eclipse.che.api.core.NotFoundException;
 import org.eclipse.che.api.core.ServerException;
+import org.eclipse.che.api.core.ValidationException;
 import org.eclipse.che.api.core.model.workspace.config.Environment;
-//import org.eclipse.che.api.environment.server.EnvironmentParser;
-//import org.eclipse.che.api.environment.server.model.CheServicesEnvironmentImpl;
-import org.eclipse.che.commons.lang.Size;
+import org.eclipse.che.api.workspace.server.spi.InfrastructureException;
+import org.eclipse.che.api.workspace.server.spi.environment.InternalEnvironment;
+import org.eclipse.che.api.workspace.server.spi.environment.InternalEnvironmentFactory;
+import org.eclipse.che.api.workspace.server.spi.environment.InternalMachineConfig;
 
 /**
  * Helps to calculate amount of RAM defined in {@link Environment environment}
  *
  * @author Sergii Leschenko
+ * @author Anton Korneta
  */
 public class EnvironmentRamCalculator {
   private static final long BYTES_TO_MEGABYTES_DIVIDER = 1024L * 1024L;
 
-//  private final EnvironmentParser environmentParser;
-  private final long defaultMachineMemorySizeBytes;
+  private final Map<String, InternalEnvironmentFactory> environmentFactories;
 
   @Inject
-  public EnvironmentRamCalculator(
-//      EnvironmentParser environmentParser,
-      @Named("che.workspace.default_memory_mb") int defaultMachineMemorySizeMB) {
-//    this.environmentParser = environmentParser;
-    this.defaultMachineMemorySizeBytes = Size.parseSize(defaultMachineMemorySizeMB + "MB");
+  public EnvironmentRamCalculator(Map<String, InternalEnvironmentFactory> environmentFactories) {
+    this.environmentFactories = environmentFactories;
   }
 
   /**
@@ -42,25 +45,34 @@ public class EnvironmentRamCalculator {
    * environment in megabytes.
    */
   public long calculate(Environment environment) throws ServerException {
-    /*
-    CheServicesEnvironmentImpl composeEnv = environmentParser.parse(environment);
+    try {
+      return calculate(createInternalEnvironment(environment));
+    } catch (InfrastructureException | ValidationException | NotFoundException ex) {
+      throw new ServerException(ex);
+    }
+  }
 
-    long sumBytes =
-        composeEnv
-            .getServices()
-            .values()
-            .stream()
-            .mapToLong(
-                value -> {
-                  if (value.getMemLimit() == null || value.getMemLimit() == 0) {
-                    return defaultMachineMemorySizeBytes;
-                  } else {
-                    return value.getMemLimit();
-                  }
-                })
-            .sum();
-    return sumBytes / BYTES_TO_MEGABYTES_DIVIDER;
-    */
-    return 0L;
+  public long calculate(InternalEnvironment environment) throws ServerException {
+    try {
+      long sum = 0L;
+      for (InternalMachineConfig machine : environment.getMachines().values()) {
+        sum += Long.parseLong(machine.getAttributes().get(MEMORY_LIMIT_ATTRIBUTE));
+      }
+      return sum / BYTES_TO_MEGABYTES_DIVIDER;
+    } catch (NumberFormatException ex) {
+      throw new ServerException(
+          "Failed to calculate environment RAM size due to invalid attribute format.", ex);
+    }
+  }
+
+  private InternalEnvironment createInternalEnvironment(Environment environment)
+      throws InfrastructureException, ValidationException, NotFoundException {
+    String recipeType = environment.getRecipe().getType();
+    InternalEnvironmentFactory factory = environmentFactories.get(recipeType);
+    if (factory == null) {
+      throw new NotFoundException(
+          format("InternalEnvironmentFactory is not configured for recipe type: '%s'", recipeType));
+    }
+    return factory.create(environment);
   }
 }

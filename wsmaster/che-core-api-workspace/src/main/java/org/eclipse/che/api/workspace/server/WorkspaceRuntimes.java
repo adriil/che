@@ -234,9 +234,7 @@ public class WorkspaceRuntimes {
 
       publishWorkspaceStatusEvent(workspaceId, STARTING, STOPPED, null);
 
-      return CompletableFuture.runAsync(
-          ThreadLocalPropagateContext.wrap(new StartRuntimeTask(workspace, options, runtime)),
-          sharedPool.getExecutor());
+      return doStartAsync(workspace, options, runtime);
     } catch (ValidationException e) {
       LOG.error(e.getLocalizedMessage(), e);
       throw new ConflictException(e.getLocalizedMessage());
@@ -244,6 +242,14 @@ public class WorkspaceRuntimes {
       LOG.error(e.getLocalizedMessage(), e);
       throw new ServerException(e.getLocalizedMessage(), e);
     }
+  }
+
+  // package private is here because it is KOSTIL.
+  // we need to extend it
+  protected CompletableFuture<Void> doStartAsync(Workspace workspace, Map<String, String> options, InternalRuntime runtime) {
+    return CompletableFuture.runAsync(
+        ThreadLocalPropagateContext.wrap(new StartRuntimeTask(workspace, options, runtime)),
+        sharedPool.getExecutor());
   }
 
   private class StartRuntimeTask implements Runnable {

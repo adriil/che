@@ -70,7 +70,7 @@ public class OpenShiftEnvironmentFactoryTest {
   @BeforeMethod
   public void setup() throws Exception {
     osEnvironmentFactory =
-        new OpenShiftEnvironmentFactory(null, null, null, factory, osEnvValidator);
+        new OpenShiftEnvironmentFactory(null, null, null, factory, osEnvValidator, 1024L);
     when(factory.create()).thenReturn(client);
     when(client.lists()).thenReturn(listMixedOperation);
     when(listMixedOperation.load(any(InputStream.class))).thenReturn(serverGettable);
