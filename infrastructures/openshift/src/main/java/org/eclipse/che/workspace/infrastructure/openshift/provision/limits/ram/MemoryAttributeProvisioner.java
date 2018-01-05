@@ -37,10 +37,11 @@ public class MemoryAttributeProvisioner implements ConfigurationProvisioner {
     final Map<String, InternalMachineConfig> machines = osEnv.getMachines();
     for (Pod pod : osEnv.getPods().values()) {
       for (Container container : pod.getSpec().getContainers()) {
-        final Map<String, String> a = machines.get(machineName(pod, container)).getAttributes();
+        final Map<String, String> machineAttributes =
+            machines.get(machineName(pod, container)).getAttributes();
         container.setResources(
             new ResourceRequirementsBuilder()
-                .addToLimits("memory", new Quantity(a.get(MEMORY_LIMIT_ATTRIBUTE)))
+                .addToLimits("memory", new Quantity(machineAttributes.get(MEMORY_LIMIT_ATTRIBUTE)))
                 .build());
       }
     }
