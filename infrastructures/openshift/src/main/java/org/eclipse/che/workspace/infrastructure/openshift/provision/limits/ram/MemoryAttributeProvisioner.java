@@ -1,18 +1,23 @@
+/*
+ * Copyright (c) 2012-2017 Red Hat, Inc.
+ * All rights reserved. This program and the accompanying materials
+ * are made available under the terms of the Eclipse Public License v1.0
+ * which accompanies this distribution, and is available at
+ * http://www.eclipse.org/legal/epl-v10.html
+ *
+ * Contributors:
+ *   Red Hat, Inc. - initial API and implementation
+ */
 package org.eclipse.che.workspace.infrastructure.openshift.provision.limits.ram;
 
+import static org.eclipse.che.api.core.model.workspace.runtime.Machine.MEMORY_LIMIT_ATTRIBUTE;
 import static org.eclipse.che.workspace.infrastructure.openshift.Names.machineName;
 
-import com.google.inject.Inject;
 import io.fabric8.kubernetes.api.model.Container;
 import io.fabric8.kubernetes.api.model.Pod;
 import io.fabric8.kubernetes.api.model.Quantity;
-import io.fabric8.kubernetes.api.model.ResourceRequirements;
 import io.fabric8.kubernetes.api.model.ResourceRequirementsBuilder;
-import java.util.Collection;
 import java.util.Map;
-import javax.inject.Named;
-import org.eclipse.che.api.core.model.workspace.config.MachineConfig;
-import org.eclipse.che.api.core.model.workspace.runtime.Machine;
 import org.eclipse.che.api.core.model.workspace.runtime.RuntimeIdentity;
 import org.eclipse.che.api.workspace.server.spi.InfrastructureException;
 import org.eclipse.che.api.workspace.server.spi.environment.InternalMachineConfig;
@@ -20,32 +25,23 @@ import org.eclipse.che.workspace.infrastructure.openshift.environment.OpenShiftE
 import org.eclipse.che.workspace.infrastructure.openshift.provision.ConfigurationProvisioner;
 
 /**
- * Sets Ram limit to openshift machine
+ * Sets Ram limit to OpenShift machine.
  *
  * @author Anton Korneta
  */
-public class RamLimitProvisioner implements ConfigurationProvisioner {
-
-  private final long defaultMachineMemorySizeBytes;
-
-  @Inject
-  public RamLimitProvisioner(
-      @Named("che.workspace.default_memory_mb") long defaultMachineMemorySizeMB) {
-    this.defaultMachineMemorySizeBytes = defaultMachineMemorySizeMB * 1_024 * 1_024;
-  }
+public class MemoryAttributeProvisioner implements ConfigurationProvisioner {
 
   @Override
   public void provision(OpenShiftEnvironment osEnv, RuntimeIdentity identity)
       throws InfrastructureException {
     final Map<String, InternalMachineConfig> machines = osEnv.getMachines();
-    final Collection<Pod> pods = osEnv.getPods().values();
-    for (Pod pod : pods) {
+    for (Pod pod : osEnv.getPods().values()) {
       for (Container container : pod.getSpec().getContainers()) {
-        final InternalMachineConfig machineConfig = machines.get(machineName(pod, container));
-        final ResourceRequirements rr = new ResourceRequirementsBuilder()
-            .addToLimits("", new Quantity("2", "Gi")).build();
-        machineConfig.getAttributes().get(Machine.MEMORY_LIMIT_ATTRIBUTE);
-        container.setResources(rr);
+        final Map<String, String> a = machines.get(machineName(pod, container)).getAttributes();
+        container.setResources(
+            new ResourceRequirementsBuilder()
+                .addToLimits("memory", new Quantity(a.get(MEMORY_LIMIT_ATTRIBUTE)))
+                .build());
       }
     }
   }

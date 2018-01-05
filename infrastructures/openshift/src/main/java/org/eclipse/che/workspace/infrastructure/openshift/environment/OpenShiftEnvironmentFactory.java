@@ -159,7 +159,6 @@ public class OpenShiftEnvironmentFactory extends InternalEnvironmentFactory<Open
     return osEnv;
   }
 
-
   // TODO CHECK THIS
   @VisibleForTesting
   void setRamLimitAttribute(Map<String, InternalMachineConfig> machines, Collection<Pod> pods) {
