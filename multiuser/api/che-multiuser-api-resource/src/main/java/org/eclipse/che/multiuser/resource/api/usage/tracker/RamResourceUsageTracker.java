@@ -23,6 +23,7 @@ import org.eclipse.che.account.shared.model.Account;
 import org.eclipse.che.api.core.NotFoundException;
 import org.eclipse.che.api.core.Pages;
 import org.eclipse.che.api.core.ServerException;
+import org.eclipse.che.api.core.model.workspace.WorkspaceStatus;
 import org.eclipse.che.api.workspace.server.WorkspaceManager;
 import org.eclipse.che.api.workspace.server.WorkspaceRuntimes;
 import org.eclipse.che.api.workspace.server.model.impl.WorkspaceImpl;
@@ -70,33 +71,18 @@ public class RamResourceUsageTracker implements ResourceUsageTracker {
             .collect(Collectors.toList());
     long currentlyUsedRamMB = 0;
     for (WorkspaceImpl activeWorkspace : activeWorkspaces) {
-
-      final Optional<RuntimeContext> runtimeContext =
-          workspaceRuntimes.getRuntimeContext(activeWorkspace.getId());
-      if (runtimeContext.isPresent()) {
+      if (WorkspaceStatus.STARTING.equals(activeWorkspace.getStatus())) {
+        final Optional<RuntimeContext> runtimeContext =
+            workspaceRuntimes.getRuntimeContext(activeWorkspace.getId());
+        if (runtimeContext.isPresent()) {
+          currentlyUsedRamMB +=
+              environmentRamCalculator.calculate(runtimeContext.get().getEnvironment());
+        }
+      } else {
+        // TODO GET RAM FROM RUNTIME MACHINES
         currentlyUsedRamMB +=
-            environmentRamCalculator.calculate(runtimeContext.get().getEnvironment());
+            environmentRamCalculator.calculate(activeWorkspace.getRuntime().getMachines().values());
       }
-
-      // if (WorkspaceStatus.STARTING.equals(activeWorkspace.getStatus())) {
-        // starting workspace may not have all machine in runtime
-        // it is need to calculate ram from environment config
-        //EnvironmentImpl activeEnvironmentConfig =
-        //    activeWorkspace
-        //        .getConfig()
-        //        .getEnvironments()
-        //        .get(activeWorkspace.getRuntime().getActiveEnv());
-
-        //currentlyUsedRamMB += environmentRamCalculator.calculate(activeEnvironmentConfig);
-        //} else {
-        //currentlyUsedRamMB += 0L;
-        //            activeWorkspace
-        //                .getRuntime()
-        //                .getMachines()
-        //                .stream()
-        //                .mapToInt(machine -> machine.getConfig().getLimits().getRam())
-        //                .sum();
-        //}
     }
 
     if (currentlyUsedRamMB > 0) {

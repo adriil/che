@@ -13,12 +13,14 @@ package org.eclipse.che.multiuser.resource.api.usage.tracker;
 import static java.lang.String.format;
 import static org.eclipse.che.api.core.model.workspace.runtime.Machine.MEMORY_LIMIT_ATTRIBUTE;
 
+import java.util.Collection;
 import java.util.Map;
 import javax.inject.Inject;
 import org.eclipse.che.api.core.NotFoundException;
 import org.eclipse.che.api.core.ServerException;
 import org.eclipse.che.api.core.ValidationException;
 import org.eclipse.che.api.core.model.workspace.config.Environment;
+import org.eclipse.che.api.core.model.workspace.runtime.Machine;
 import org.eclipse.che.api.workspace.server.spi.InfrastructureException;
 import org.eclipse.che.api.workspace.server.spi.environment.InternalEnvironment;
 import org.eclipse.che.api.workspace.server.spi.environment.InternalEnvironmentFactory;
@@ -53,16 +55,19 @@ public class EnvironmentRamCalculator {
   }
 
   public long calculate(InternalEnvironment environment) throws ServerException {
-    try {
-      long sum = 0L;
-      for (InternalMachineConfig machine : environment.getMachines().values()) {
-        sum += Long.parseLong(machine.getAttributes().get(MEMORY_LIMIT_ATTRIBUTE));
-      }
-      return sum / BYTES_TO_MEGABYTES_DIVIDER;
-    } catch (NumberFormatException ex) {
-      throw new ServerException(
-          "Failed to calculate environment RAM size due to invalid attribute format.", ex);
+    long sum = 0L;
+    for (InternalMachineConfig machine : environment.getMachines().values()) {
+      sum += parseMemoryAttribute(machine.getAttributes());
     }
+    return sum / BYTES_TO_MEGABYTES_DIVIDER;
+  }
+
+  public long calculate(Collection<? extends Machine> machines) throws ServerException {
+    long sum = 0L;
+    for (Machine machine : machines) {
+      sum += parseMemoryAttribute(machine.getAttributes());
+    }
+    return sum / BYTES_TO_MEGABYTES_DIVIDER;
   }
 
   private InternalEnvironment createInternalEnvironment(Environment environment)
@@ -74,5 +79,14 @@ public class EnvironmentRamCalculator {
           format("InternalEnvironmentFactory is not configured for recipe type: '%s'", recipeType));
     }
     return factory.create(environment);
+  }
+
+  private long parseMemoryAttribute(Map<String, String> attributes) throws ServerException {
+    try {
+      return Long.parseLong(attributes.get(MEMORY_LIMIT_ATTRIBUTE));
+    } catch (NumberFormatException ex) {
+      throw new ServerException(
+          "Failed to calculate environment RAM size due to invalid attribute format.", ex);
+    }
   }
 }

@@ -236,20 +236,23 @@ public class OpenShiftInternalRuntime extends InternalRuntime<OpenShiftRuntimeCo
   @VisibleForTesting
   void createPods(List<Service> services, List<Route> routes) throws InfrastructureException {
     final ServerResolver serverResolver = ServerResolver.of(services, routes);
-    for (Pod toCreate : getContext().getEnvironment().getPods().values()) {
+    final OpenShiftEnvironment environment = getContext().getEnvironment();
+    final Map<String, InternalMachineConfig> machines = environment.getMachines();
+    for (Pod toCreate : environment.getPods().values()) {
       final Pod createdPod = project.pods().create(toCreate);
       final ObjectMeta podMetadata = createdPod.getMetadata();
       for (Container container : createdPod.getSpec().getContainers()) {
-        String machineName = Names.machineName(toCreate, container);
-        OpenShiftMachine machine =
+        final String machineName = Names.machineName(toCreate, container);
+        final OpenShiftMachine machine =
             new OpenShiftMachine(
                 machineName,
                 podMetadata.getName(),
                 container.getName(),
+                machines.get(machineName).getAttributes(),
                 serverResolver.resolve(machineName),
                 project);
-        machines.put(machine.getName(), machine);
-        sendStartingEvent(machine.getName());
+        this.machines.put(machineName, machine);
+        sendStartingEvent(machineName);
       }
     }
   }
